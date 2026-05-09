@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SysInfoApp", "SysInfoApp.csproj", "{FBF4DB3F-9522-20BC-2238-882E0A67F261}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FBF4DB3F-9522-20BC-2238-882E0A67F261}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBF4DB3F-9522-20BC-2238-882E0A67F261}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBF4DB3F-9522-20BC-2238-882E0A67F261}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBF4DB3F-9522-20BC-2238-882E0A67F261}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FFC2D4AC-49DF-4A50-BDB2-374B9E78025B}
+	EndGlobalSection
+EndGlobal
