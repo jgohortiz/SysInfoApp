@@ -107,6 +107,8 @@ el acceso para herramientas de soporte remoto como AnyDesk o Remote Desktop.
 
 ### Aplicaciones
 
+![SoftwarePage](screenshot/SoftwarePage.png)
+
 Muestra la lista completa de programas instalados en el equipo, obtenida
 directamente del registro de Windows. Lee tanto la rama de 64 bits como la
 de 32 bits para garantizar que no quede ninguna aplicación fuera de la lista.
@@ -129,6 +131,8 @@ Al exportar, si hay un filtro activo, solo se exportan los programas visibles.
 ---
 
 ### Bateria *(solo en portátiles)*
+
+![BatteryPage](screenshot/BatteryPage.png)
 
 Esta pestaña aparece únicamente si el equipo tiene una batería detectada.
 En equipos de escritorio no se muestra. Se actualiza automáticamente cada
@@ -155,6 +159,8 @@ original de fábrica para determinar el nivel de desgaste de la batería.
 ---
 
 ### Hardware
+
+![HardwarePage](screenshot/HardwarePage.png)
 
 Muestra información técnica detallada sobre los componentes físicos del
 equipo, organizada en tres secciones: procesador, memoria RAM y discos.
@@ -205,6 +211,8 @@ al equipo, con su espacio total, disponible y porcentaje de uso.
 
 ### Impresoras
 
+![PrintersPage](screenshot/PrintersPage.png)
+
 Muestra todas las impresoras instaladas en el equipo, incluyendo impresoras
 físicas, virtuales (como PDF), de red y locales. Indica cuál es la impresora
 predeterminada, su estado actual, el puerto asignado y el controlador (driver)
@@ -230,6 +238,8 @@ encontradas.
 ---
 
 ### Red
+
+![NetworkPage](screenshot/NetworkPage.png)
 
 Muestra únicamente los adaptadores de red que están activos en el momento
 de la consulta. Los adaptadores desconectados o inactivos no aparecen en
