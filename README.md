@@ -77,6 +77,8 @@ SysInfoApp/
 
 ### Sistema
 
+![SystemPage](screenshot/SystemPage.png)
+
 Es la pestaña principal de la aplicación. Muestra un resumen completo de la
 identidad del equipo: nombre en la red, fabricante, número de serie, usuario
 activo, versión del sistema operativo con número de compilación, tiempo que
