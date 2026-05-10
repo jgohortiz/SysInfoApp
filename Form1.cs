@@ -8,7 +8,12 @@ namespace SysInfoApp
 {
     public partial class Form1 : Form
     {
+        private SystemPage   _systemPage   = null!;
+        private HardwarePage _hardwarePage = null!;
+        private NetworkPage  _networkPage  = null!;
+        private PrintersPage _printersPage = null!;
         private SoftwarePage _softwarePage = null!;
+        private BatteryPage? _batteryPage;
 
         public Form1()
         {
@@ -33,10 +38,22 @@ namespace SysInfoApp
                 Font = new Font("Segoe UI", 9f)
             };
 
+            _systemPage   = new SystemPage();
+            _hardwarePage = new HardwarePage();
+            _networkPage  = new NetworkPage();
+            _printersPage = new PrintersPage();
             _softwarePage = new SoftwarePage();
-            tabs.TabPages.Add(new SystemPage());
-            tabs.TabPages.Add(new NetworkPage());
-            tabs.TabPages.Add(_softwarePage);
+
+            tabs.TabPages.Add(_systemPage);       // 1. Sistema   — siempre primero
+            tabs.TabPages.Add(_softwarePage);     // 2. Aplicaciones
+            if (HasBattery())                     // 3. Batería   — solo si hay
+            {
+                _batteryPage = new BatteryPage();
+                tabs.TabPages.Add(_batteryPage);
+            }
+            tabs.TabPages.Add(_hardwarePage);     // 4. Hardware
+            tabs.TabPages.Add(_printersPage);     // 5. Impresoras
+            tabs.TabPages.Add(_networkPage);      // 6. Red
 
             // ── StatusStrip ──────────────────────────────────────────────
             var status = new StatusStrip();
@@ -69,6 +86,15 @@ namespace SysInfoApp
             btnExport.Click += (_, _) =>
                 ExportHelper.ExportToTxt(_softwarePage.VisibleItems);
 
+            var btnRefresh = new Button
+            {
+                Text  = "Refrescar",
+                Width = 90,
+                Dock  = DockStyle.Left,
+                Font  = new Font("Segoe UI", 9f)
+            };
+            btnRefresh.Click += (_, _) => RefreshAll();
+
             var btnClose = new Button
             {
                 Text  = "Cerrar",
@@ -78,6 +104,7 @@ namespace SysInfoApp
             };
             btnClose.Click += (_, _) => this.Close();
 
+            bottomPanel.Controls.Add(btnRefresh);
             bottomPanel.Controls.Add(btnExport);
             bottomPanel.Controls.Add(btnClose);
 
@@ -85,6 +112,30 @@ namespace SysInfoApp
             this.Controls.Add(tabs);
             this.Controls.Add(bottomPanel);
             this.Controls.Add(status);
+        }
+
+        /// <summary>
+        /// Detecta si el equipo tiene batería usando PowerStatus.
+        /// No requiere admin.
+        /// </summary>
+        private static bool HasBattery()
+        {
+            try
+            {
+                var ps = SystemInformation.PowerStatus;
+                return ps.BatteryChargeStatus != BatteryChargeStatus.NoSystemBattery
+                    && ps.BatteryChargeStatus != BatteryChargeStatus.Unknown;
+            }
+            catch { }
+            return false;
+        }
+
+        private void RefreshAll()
+        {
+            _hardwarePage.RefreshData();
+            _networkPage.RefreshData();
+            _printersPage.RefreshData();
+            _batteryPage?.RefreshData();
         }
     }
 }

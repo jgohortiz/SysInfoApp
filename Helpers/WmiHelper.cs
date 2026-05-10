@@ -6,6 +6,10 @@ namespace SysInfoApp.Helpers
 {
     public static class WmiHelper
     {
+        /// <summary>
+        /// Consulta WMI estándar. Funciona sin admin para la mayoría
+        /// de clases de Win32.
+        /// </summary>
         public static string GetValue(string wmiClass, string property)
         {
             try
@@ -19,6 +23,10 @@ namespace SysInfoApp.Helpers
             return "N/A";
         }
 
+        /// <summary>
+        /// Versión comercial del SO + número de build.
+        /// Win32_OperatingSystem es accesible sin admin.
+        /// </summary>
         public static string GetOsVersion()
         {
             string caption = GetValue("Win32_OperatingSystem", "Caption");
@@ -27,6 +35,10 @@ namespace SysInfoApp.Helpers
             return build != "N/A" ? $"{caption}  (Build {build})" : caption;
         }
 
+        /// <summary>
+        /// Segundos desde el último arranque.
+        /// Fallback a TickCount64 si WMI falla.
+        /// </summary>
         public static long GetUptimeSeconds()
         {
             try
@@ -39,6 +51,9 @@ namespace SysInfoApp.Helpers
             return Environment.TickCount64 / 1000;
         }
 
+        /// <summary>
+        /// Formatea segundos como "X días, HH:mm:ss".
+        /// </summary>
         public static string FormatUptime(long seconds)
         {
             var ts   = TimeSpan.FromSeconds(seconds);
@@ -47,32 +62,64 @@ namespace SysInfoApp.Helpers
         }
 
         /// <summary>
-        /// Devuelve el serial del BIOS.
-        /// Intenta WMI primero; si falla por permisos usa un segundo
-        /// scope explícito con impersonación de nivel de seguridad bajo.
+        /// Serial del BIOS con tres niveles de fallback:
+        /// 1. WMI estándar
+        /// 2. WMI con impersonación explícita
+        /// 3. WMIC por línea de comandos (funciona sin admin)
         /// </summary>
         public static string GetSerial()
         {
-            // Intento 1 — WMI estándar (funciona en la mayoría de equipos)
+            // Intento 1 — WMI estándar
             string serial = GetValue("Win32_BIOS", "SerialNumber");
-            if (serial != "N/A") return serial;
+            if (serial != "N/A" && !string.IsNullOrWhiteSpace(serial))
+                return serial;
 
-            // Intento 2 — WMI con opciones de conexión explícitas
+            // Intento 2 — WMI con impersonación
             try
             {
                 var options = new ConnectionOptions
                 {
-                    Impersonation  = ImpersonationLevel.Impersonate,
-                    Authentication = AuthenticationLevel.PacketPrivacy,
+                    Impersonation    = ImpersonationLevel.Impersonate,
+                    Authentication   = AuthenticationLevel.PacketPrivacy,
                     EnablePrivileges = true
                 };
-                var scope    = new ManagementScope(@"\\.\root\cimv2", options);
-                var query    = new ObjectQuery("SELECT SerialNumber FROM Win32_BIOS");
+                var scope = new ManagementScope(@"\\.\root\cimv2", options);
+                scope.Connect();
+                var query = new ObjectQuery("SELECT SerialNumber FROM Win32_BIOS");
                 using var searcher = new ManagementObjectSearcher(scope, query);
                 foreach (ManagementObject obj in searcher.Get())
                 {
                     string? val = obj["SerialNumber"]?.ToString()?.Trim();
-                    if (!string.IsNullOrEmpty(val)) return val;
+                    if (!string.IsNullOrEmpty(val) && val != "N/A")
+                        return val;
+                }
+            }
+            catch { }
+
+            // Intento 3 — WMIC por línea de comandos (no requiere admin)
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName               = "wmic",
+                    Arguments              = "bios get serialnumber",
+                    RedirectStandardOutput = true,
+                    UseShellExecute        = false,
+                    CreateNoWindow         = true
+                };
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    string output = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit();
+                    foreach (string line in output.Split('\n'))
+                    {
+                        string trimmed = line.Trim();
+                        if (!string.IsNullOrEmpty(trimmed) &&
+                            !trimmed.Equals("SerialNumber",
+                                StringComparison.OrdinalIgnoreCase))
+                            return trimmed;
+                    }
                 }
             }
             catch { }
@@ -81,13 +128,14 @@ namespace SysInfoApp.Helpers
         }
 
         /// <summary>
-        /// Devuelve el SSID de la red Wi-Fi activa.
-        /// Intenta WMI (requiere admin); si falla usa netsh (funciona sin admin).
+        /// SSID de la red Wi-Fi activa con dos niveles de fallback:
+        /// 1. WMI root\wmi (requiere admin en algunos equipos)
+        /// 2. netsh wlan show interfaces (funciona sin admin)
         /// Retorna null si no hay Wi-Fi activa.
         /// </summary>
         public static string? GetWifiSSID()
         {
-            // Intento 1 — WMI (requiere admin en algunos sistemas)
+            // Intento 1 — WMI
             try
             {
                 using var searcher = new ManagementObjectSearcher(
@@ -117,7 +165,7 @@ namespace SysInfoApp.Helpers
 
         /// <summary>
         /// Obtiene el SSID ejecutando "netsh wlan show interfaces".
-        /// Funciona sin permisos de administrador.
+        /// Disponible para cualquier usuario sin privilegios.
         /// </summary>
         private static string? GetWifiSSIDNetsh()
         {
@@ -140,11 +188,12 @@ namespace SysInfoApp.Helpers
 
                 foreach (string line in output.Split('\n'))
                 {
-                    // Busca la línea "    SSID                   : MiRed"
-                    // y excluye "BSSID" para no confundirlos
                     string trimmed = line.Trim();
-                    if (trimmed.StartsWith("SSID", StringComparison.OrdinalIgnoreCase)
-                        && !trimmed.StartsWith("BSSID", StringComparison.OrdinalIgnoreCase))
+                    // Busca "SSID : nombre" pero excluye "BSSID"
+                    if (trimmed.StartsWith("SSID",
+                            StringComparison.OrdinalIgnoreCase) &&
+                        !trimmed.StartsWith("BSSID",
+                            StringComparison.OrdinalIgnoreCase))
                     {
                         int idx = trimmed.IndexOf(':');
                         if (idx >= 0)

@@ -81,10 +81,10 @@ namespace SysInfoApp.Pages
                 Sorting       = SortOrder.Ascending
             };
 
-            _list.Columns.Add("Nombre",             260);
-            _list.Columns.Add("Versión",            120);
-            _list.Columns.Add("Publicador",         200);
-            _list.Columns.Add("Fecha instalación",  130);
+            _list.Columns.Add("Nombre",            260);
+            _list.Columns.Add("Versión",           120);
+            _list.Columns.Add("Publicador",        200);
+            _list.Columns.Add("Fecha instalación", 130);
 
             _list.ColumnClick += (_, e) =>
             {
@@ -121,40 +121,51 @@ namespace SysInfoApp.Pages
 
             foreach (string keyPath in keys)
             {
-                using var root = Registry.LocalMachine.OpenSubKey(keyPath);
+                RegistryKey? root;
+                try   { root = Registry.LocalMachine.OpenSubKey(keyPath); }
+                catch { continue; }
                 if (root == null) continue;
 
-                foreach (string sub in root.GetSubKeyNames())
+                using (root)
                 {
-                    RegistryKey? key;
-                    try   { key = root.OpenSubKey(sub); }
-                    catch { continue; }
-                    if (key == null) continue;
+                    foreach (string sub in root.GetSubKeyNames())
+                    {
+                        RegistryKey? key;
+                        try   { key = root.OpenSubKey(sub); }
+                        catch { continue; }
+                        if (key == null) continue;
 
-                    string? name = key.GetValue("DisplayName")?.ToString()?.Trim();
-                    if (string.IsNullOrWhiteSpace(name) || !seen.Add(name)) continue;
+                        using (key)
+                        {
+                            string? name;
+                            try   { name = key.GetValue("DisplayName")?.ToString()?.Trim(); }
+                            catch { continue; }
 
-                    string ver     = key.GetValue("DisplayVersion")?.ToString() ?? "";
-                    string pub     = key.GetValue("Publisher")?.ToString() ?? "";
-                    string rawDate = key.GetValue("InstallDate")?.ToString() ?? "";
+                            if (string.IsNullOrWhiteSpace(name) || !seen.Add(name))
+                                continue;
 
-                    string date = "";
-                    if (rawDate.Length == 8 &&
-                        DateTime.TryParseExact(rawDate, "yyyyMMdd", null,
-                            System.Globalization.DateTimeStyles.None, out var dt))
-                        date = dt.ToString("dd/MM/yyyy");
+                            string ver     = TryGetReg(key, "DisplayVersion");
+                            string pub     = TryGetReg(key, "Publisher");
+                            string rawDate = TryGetReg(key, "InstallDate");
 
-                    var item = new ListViewItem(name);
-                    item.SubItems.Add(ver);
-                    item.SubItems.Add(pub);
-                    item.SubItems.Add(date);
-                    _all.Add(item);
+                            string date = "";
+                            if (rawDate.Length == 8 &&
+                                DateTime.TryParseExact(rawDate, "yyyyMMdd", null,
+                                    System.Globalization.DateTimeStyles.None, out var dt))
+                                date = dt.ToString("dd/MM/yyyy");
+
+                            var item = new ListViewItem(name);
+                            item.SubItems.Add(ver);
+                            item.SubItems.Add(pub);
+                            item.SubItems.Add(date);
+                            _all.Add(item);
+                        }
+                    }
                 }
             }
 
             _all = _all.OrderBy(i => i.Text).ToList();
             foreach (var item in _all) _list.Items.Add(item);
-
             _list.EndUpdate();
             UpdateCount();
         }
@@ -179,5 +190,12 @@ namespace SysInfoApp.Pages
 
         private void UpdateCount() =>
             _countLbl.Text = $"{_list.Items.Count} aplicación(es)";
+
+        /// <summary>Lee un valor del registro sin lanzar excepción.</summary>
+        private static string TryGetReg(RegistryKey key, string valueName)
+        {
+            try { return key.GetValue(valueName)?.ToString() ?? ""; }
+            catch { return ""; }
+        }
     }
 }

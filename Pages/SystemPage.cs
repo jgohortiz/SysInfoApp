@@ -108,47 +108,39 @@ namespace SysInfoApp.Pages
                 {
                     Text    = "Soporte remoto",
                     Dock    = DockStyle.Top,
-                    Height  = 60,
-                    Padding = new Padding(12, 4, 12, 4),
+                    Height  = 80,
+                    Padding = new Padding(4, 4, 4, 4),
                     Font    = new System.Drawing.Font("Segoe UI", 9f)
-                };
-
-                var flow = new FlowLayoutPanel
-                {
-                    Dock          = DockStyle.Fill,
-                    FlowDirection = FlowDirection.LeftToRight,
-                    WrapContents  = false,
-                    AutoSize      = false,
-                    Padding       = new Padding(0)
                 };
 
                 var textPart = new Label
                 {
-                    Text      = "Para soporte remoto, la dirección IP es:  ",
-                    AutoSize  = true,
+                    Text      = "Para soporte remoto, la dirección IP es:",
+                    Dock      = DockStyle.Top,
+                    Height    = 20,
                     TextAlign = System.Drawing.ContentAlignment.MiddleLeft,
                     Font      = new System.Drawing.Font("Segoe UI", 9f),
-                    Margin    = new Padding(0, 6, 0, 0)
+                    Padding   = new Padding(4, 0, 0, 0)
                 };
 
                 var ipPart = new Label
                 {
                     Text      = supportIP,
-                    AutoSize  = true,
+                    Dock      = DockStyle.Top,
+                    Height    = 32,
                     TextAlign = System.Drawing.ContentAlignment.MiddleLeft,
-                    Font      = new System.Drawing.Font("Segoe UI", 9f,
+                    Font      = new System.Drawing.Font("Segoe UI", 16f,
                                     System.Drawing.FontStyle.Bold),
-                    Margin    = new Padding(0, 6, 0, 0)
+                    Padding   = new Padding(4, 0, 0, 0)
                 };
 
-                flow.Controls.Add(textPart);
-                flow.Controls.Add(ipPart);
-                supportGroup.Controls.Add(flow);
+                supportGroup.Controls.Add(ipPart);
+                supportGroup.Controls.Add(textPart);
 
                 var supportWrapper = new Panel
                 {
                     Dock    = DockStyle.Top,
-                    Height  = 76,
+                    Height  = 96,
                     Padding = new Padding(12, 8, 12, 0)
                 };
                 supportWrapper.Controls.Add(supportGroup);
@@ -198,9 +190,6 @@ namespace SysInfoApp.Pages
             _timer.Start();
         }
 
-        /// <summary>
-        /// Devuelve la primera IP IPv4 válida, activa y distinta de 127.x.x.x y 169.254.x.x.
-        /// </summary>
         private static string? GetFirstValidIP()
         {
             return NetworkInterface
@@ -216,9 +205,6 @@ namespace SysInfoApp.Pages
                 .FirstOrDefault();
         }
 
-        /// <summary>
-        /// Devuelve todas las IPs IPv4 activas separadas por coma.
-        /// </summary>
         private static string GetActiveIPs()
         {
             var ips = NetworkInterface

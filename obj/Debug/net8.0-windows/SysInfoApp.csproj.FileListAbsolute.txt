@@ -2,7 +2,6 @@ D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\SysInfoApp.exe
 D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\SysInfoApp.deps.json
 D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\SysInfoApp.runtimeconfig.json
 D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\SysInfoApp.dll
-D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\SysInfoApp.pdb
 D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\System.Management.dll
 D:\Repositorios\SysInfoApp\bin\Debug\net8.0-windows\runtimes\win\lib\net8.0\System.Management.dll
 D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\SysInfoApp.csproj.AssemblyReference.cache
@@ -13,6 +12,5 @@ D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\SysInfoApp.csproj.CoreCompil
 D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\SysInfoApp.csproj.Up2Date
 D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\SysInfoApp.dll
 D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\refint\SysInfoApp.dll
-D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\SysInfoApp.pdb
 D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\SysInfoApp.genruntimeconfig.cache
 D:\Repositorios\SysInfoApp\obj\Debug\net8.0-windows\ref\SysInfoApp.dll

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -34,17 +35,108 @@ namespace SysInfoApp.Helpers
             sb.AppendLine($"> Generado: {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
             sb.AppendLine();
 
-            // ── Datos del sistema ────────────────────────────────────────
+            // ── Sistema ──────────────────────────────────────────────────
             sb.AppendLine("## Sistema");
             sb.AppendLine();
             sb.AppendLine("| Campo | Valor |");
             sb.AppendLine("|---|---|");
             sb.AppendLine($"| Hostname | {hostname} |");
             sb.AppendLine($"| Modelo | {WmiHelper.GetValue("Win32_ComputerSystem", "Model")} |");
-            sb.AppendLine($"| Serial | {WmiHelper.GetValue("Win32_BIOS", "SerialNumber")} |");
+            sb.AppendLine($"| Serial | {WmiHelper.GetSerial()} |");
             sb.AppendLine($"| Usuario | {Environment.UserName} |");
-            sb.AppendLine($"| Sistema Op. | {WmiHelper.GetOsVersion()} |");
+            sb.AppendLine($"| SO | {WmiHelper.GetOsVersion()} |");
             sb.AppendLine($"| Uptime | {WmiHelper.FormatUptime(WmiHelper.GetUptimeSeconds())} |");
+            sb.AppendLine();
+
+            // ── Hardware ─────────────────────────────────────────────────
+            sb.AppendLine("## Hardware");
+            sb.AppendLine();
+
+            // Procesador
+            sb.AppendLine("### Procesador");
+            sb.AppendLine();
+            sb.AppendLine("| Campo | Valor |");
+            sb.AppendLine("|---|---|");
+
+            string cpuName    = GetWmi("Win32_Processor", "Name");
+            string cores      = GetWmi("Win32_Processor", "NumberOfCores");
+            string logical    = GetWmi("Win32_Processor", "NumberOfLogicalProcessors");
+            string speedMhz   = GetWmi("Win32_Processor", "MaxClockSpeed");
+            string arch       = GetWmi("Win32_Processor", "AddressWidth");
+
+            string speed = int.TryParse(speedMhz, out int mhz)
+                ? $"{mhz / 1000.0:F2} GHz ({mhz} MHz)"
+                : speedMhz;
+
+            string archFmt = arch == "64" ? "64 bits" : arch == "32" ? "32 bits" : arch;
+
+            sb.AppendLine($"| Nombre | {MdCell(cpuName)} |");
+            sb.AppendLine($"| Núcleos | {cores} físicos / {logical} lógicos |");
+            sb.AppendLine($"| Velocidad | {speed} |");
+            sb.AppendLine($"| Arquitectura | {archFmt} |");
+            sb.AppendLine();
+
+            // Memoria RAM
+            sb.AppendLine("### Memoria RAM");
+            sb.AppendLine();
+            sb.AppendLine("| Campo | Valor |");
+            sb.AppendLine("|---|---|");
+
+            string totalRaw = GetWmi("Win32_ComputerSystem", "TotalPhysicalMemory");
+            string freeRaw  = GetWmi("Win32_OperatingSystem", "FreePhysicalMemory");
+            string total    = FormatBytes(totalRaw);
+
+            string free = long.TryParse(freeRaw, out long freeKb)
+                ? FormatBytes((freeKb * 1024).ToString())
+                : "N/A";
+
+            string used = "N/A";
+            if (long.TryParse(totalRaw, out long totalBytes) && freeKb > 0)
+            {
+                long usedBytes = totalBytes - (freeKb * 1024);
+                used = $"{FormatBytes(usedBytes.ToString())} ({(usedBytes * 100.0 / totalBytes):F1}% en uso)";
+            }
+
+            sb.AppendLine($"| Total | {total} |");
+            sb.AppendLine($"| En uso | {used} |");
+            sb.AppendLine($"| Disponible | {free} |");
+            sb.AppendLine();
+
+            // Discos
+            sb.AppendLine("### Discos");
+            sb.AppendLine();
+            sb.AppendLine("| Unidad | Etiqueta | Tipo | Sistema | Total | Disponible | Uso |");
+            sb.AppendLine("|---|---|---|---|---|---|---|");
+
+            try
+            {
+                using var searcher = new ManagementObjectSearcher(
+                    "SELECT * FROM Win32_LogicalDisk WHERE DriveType=3 OR DriveType=2");
+
+                foreach (ManagementObject disk in searcher.Get())
+                {
+                    string drive  = disk["DeviceID"]?.ToString()   ?? "";
+                    string label  = disk["VolumeName"]?.ToString()  ?? "";
+                    string fs     = disk["FileSystem"]?.ToString()   ?? "";
+                    string dtype  = disk["DriveType"]?.ToString() == "3" ? "Fijo" : "Extraíble";
+
+                    long size  = Convert.ToInt64(disk["Size"]      ?? 0L);
+                    long free2 = Convert.ToInt64(disk["FreeSpace"]  ?? 0L);
+                    long used2 = size - free2;
+                    string pct = size > 0 ? $"{(used2 * 100.0 / size):F1}%" : "—";
+
+                    sb.AppendLine(
+                        $"| {MdCell(drive)} " +
+                        $"| {MdCell(label)} " +
+                        $"| {dtype} " +
+                        $"| {fs} " +
+                        $"| {(size  > 0 ? FormatBytes(size.ToString())  : "—")} " +
+                        $"| {(free2 > 0 ? FormatBytes(free2.ToString()) : "—")} " +
+                        $"| {pct} |");
+                }
+            }
+            catch { }
+
             sb.AppendLine();
 
             // ── Adaptadores de red ───────────────────────────────────────
@@ -75,8 +167,11 @@ namespace SysInfoApp.Helpers
 
                 if (ips.Count == 0) continue;
 
-                string ipText = string.Join(", ", ips);
-                sb.AppendLine($"| {MdCell(nic.Name)} | {ipText} | {mac} | {nic.OperationalStatus} |");
+                sb.AppendLine(
+                    $"| {MdCell(nic.Name)} " +
+                    $"| {string.Join(", ", ips)} " +
+                    $"| {mac} " +
+                    $"| {nic.OperationalStatus} |");
             }
 
             sb.AppendLine();
@@ -84,9 +179,9 @@ namespace SysInfoApp.Helpers
             // ── Programas instalados ─────────────────────────────────────
             var items = softwareItems.ToList();
 
-            sb.AppendLine("## Programas Instalados");
+            sb.AppendLine("## Aplicaciones Instaladas");
             sb.AppendLine();
-            sb.AppendLine($"Total: **{items.Count} programas**");
+            sb.AppendLine($"Total: **{items.Count} aplicaciones**");
             sb.AppendLine();
             sb.AppendLine("| Nombre | Versión | Publicador | Fecha instalación |");
             sb.AppendLine("|---|---|---|---|");
@@ -111,9 +206,35 @@ namespace SysInfoApp.Helpers
                 MessageBoxIcon.Information);
         }
 
+        // ── Helpers privados ─────────────────────────────────────────────
+
+        private static string GetWmi(string wmiClass, string property)
+        {
+            try
+            {
+                using var searcher =
+                    new ManagementObjectSearcher($"SELECT {property} FROM {wmiClass}");
+                foreach (ManagementObject obj in searcher.Get())
+                    return obj[property]?.ToString()?.Trim() ?? "N/A";
+            }
+            catch { }
+            return "N/A";
+        }
+
+        private static string FormatBytes(string rawBytes)
+        {
+            if (!long.TryParse(rawBytes, out long bytes)) return "N/A";
+            if (bytes >= 1_073_741_824)
+                return $"{bytes / 1_073_741_824.0:F1} GB";
+            if (bytes >= 1_048_576)
+                return $"{bytes / 1_048_576.0:F1} MB";
+            if (bytes >= 1_024)
+                return $"{bytes / 1_024.0:F1} KB";
+            return $"{bytes} B";
+        }
+
         /// <summary>
-        /// Escapa caracteres especiales de Markdown dentro de celdas de tabla:
-        /// reemplaza | por &#124; y saltos de línea por espacio.
+        /// Escapa caracteres especiales de Markdown dentro de celdas de tabla.
         /// </summary>
         private static string MdCell(string value)
         {
