@@ -1,5 +1,7 @@
 # SysInfoApp
 
+![Logo](screenshot/systeminfo.png)
+
 Aplicación de escritorio para Windows desarrollada en .NET 8 con WinForms.
 Muestra información detallada del equipo en tiempo real: sistema, hardware,
 red, software instalado, impresoras y batería. Diseñada para funcionar sin
