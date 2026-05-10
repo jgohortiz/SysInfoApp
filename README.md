@@ -25,6 +25,17 @@ permisos de administrador.
 
 ## Instalación y ejecución
 
+### 0. Componentes
+Requisitos previos
+
+1. **Instalar .NET SDK (versión 8 o superior)**
+   - Descarga desde: https://dotnet.microsoft.com/download
+   - Verifica con: *dotnet --version*
+
+2. **Instalar VS Code + extensiones necesarias:**
+   - C# Dev Kit (Microsoft)
+   - C# (Microsoft)
+
 ### 1. Restaurar dependencias
 
 ```bash
