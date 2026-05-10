@@ -1,7 +1,7 @@
 # SysInfoApp
 
 <div align="center">
-  <img src="images/systeminfowhite.png" alt="Logo" width="200">
+  <img src="images/systeminfoappweb.png" alt="Logo" width="200">
 </div>
 
 Aplicación de escritorio para Windows desarrollada en .NET 8 con WinForms.
