@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SysInfoApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+47cc98437d9b27f239342bde6ccba9d5115c341f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5d1ed16ba1c4a66a3326fb113462c01d814cdfbc")]
 [assembly: System.Reflection.AssemblyProductAttribute("SysInfoApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SysInfoApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

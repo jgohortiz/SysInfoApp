@@ -203,11 +203,11 @@ namespace SysInfoApp.Pages
                     : "Calculando...";
 
             // ── WMI Win32_Battery — accesible sin admin ──────────────────
-            string chemistry   = "—";
-            string voltage     = "—";
-            string fullCap     = "—";
-            string designCap   = "—";
-            string health      = "—";
+            string chemistry   = "Indefinido";
+            string voltage     = "Indefinido";
+            string fullCap     = "Indefinido";
+            string designCap   = "Indefinido";
+            string health      = "Indefinido";
 
             try
             {

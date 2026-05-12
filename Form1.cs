@@ -15,7 +15,17 @@ namespace SysInfoApp
         private SoftwarePage _softwarePage = null!;
         private BatteryPage? _batteryPage;
 
-        public Form1()
+        /// <summary>
+        /// Constructor que recibe las páginas ya construidas desde Program.cs.
+        /// Así el splash puede mostrar el progreso real de cada una.
+        /// </summary>
+        public Form1(
+            SystemPage   systemPage,
+            HardwarePage hardwarePage,
+            NetworkPage  networkPage,
+            PrintersPage printersPage,
+            SoftwarePage softwarePage,
+            BatteryPage? batteryPage)
         {
             this.SuspendLayout();
             this.Text          = "Información del equipo";
@@ -25,6 +35,13 @@ namespace SysInfoApp
             this.Font          = new Font("Segoe UI", 9f);
             this.Padding       = new Padding(10, 10, 10, 0);
             this.ResumeLayout(false);
+
+            _systemPage   = systemPage;
+            _hardwarePage = hardwarePage;
+            _networkPage  = networkPage;
+            _printersPage = printersPage;
+            _softwarePage = softwarePage;
+            _batteryPage  = batteryPage;
 
             BuildUI();
         }
@@ -38,19 +55,10 @@ namespace SysInfoApp
                 Font = new Font("Segoe UI", 9f)
             };
 
-            _systemPage   = new SystemPage();
-            _hardwarePage = new HardwarePage();
-            _networkPage  = new NetworkPage();
-            _printersPage = new PrintersPage();
-            _softwarePage = new SoftwarePage();
-
             tabs.TabPages.Add(_systemPage);       // 1. Sistema   — siempre primero
             tabs.TabPages.Add(_softwarePage);     // 2. Aplicaciones
-            if (HasBattery())                     // 3. Batería   — solo si hay
-            {
-                _batteryPage = new BatteryPage();
+            if (_batteryPage != null)             // 3. Batería   — solo si hay
                 tabs.TabPages.Add(_batteryPage);
-            }
             tabs.TabPages.Add(_hardwarePage);     // 4. Hardware
             tabs.TabPages.Add(_printersPage);     // 5. Impresoras
             tabs.TabPages.Add(_networkPage);      // 6. Red
@@ -114,10 +122,6 @@ namespace SysInfoApp
             this.Controls.Add(status);
         }
 
-        /// <summary>
-        /// Detecta si el equipo tiene batería usando PowerStatus.
-        /// No requiere admin.
-        /// </summary>
         private static bool HasBattery()
         {
             try
