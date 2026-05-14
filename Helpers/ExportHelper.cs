@@ -12,7 +12,12 @@ namespace SysInfoApp.Helpers
 {
     public static class ExportHelper
     {
-        public static void ExportToTxt(IEnumerable<ListViewItem> softwareItems)
+        /// <summary>
+        /// Exporta mostrando un SaveFileDialog al usuario.
+        /// </summary>
+        public static void ExportToTxt(
+            IEnumerable<ListViewItem> softwareItems,
+            IEnumerable<ListViewItem> deviceItems)
         {
             string hostname = Dns.GetHostName();
 
@@ -27,6 +32,38 @@ namespace SysInfoApp.Helpers
 
             if (dlg.ShowDialog() != DialogResult.OK) return;
 
+            var sb = BuildContent(hostname, softwareItems, deviceItems);
+            File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
+
+            MessageBox.Show(
+                $"Archivo guardado correctamente:\n\n{dlg.FileName}",
+                "Exportación completada",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// Exporta directamente a la ruta indicada sin mostrar diálogo.
+        /// Usado cuando la aplicación se ejecuta por línea de comandos.
+        /// </summary>
+        public static void ExportSilent(
+            IEnumerable<ListViewItem> softwareItems,
+            IEnumerable<ListViewItem> deviceItems,
+            string fullPath)
+        {
+            string hostname = Dns.GetHostName();
+            var sb = BuildContent(hostname, softwareItems, deviceItems);
+            File.WriteAllText(fullPath, sb.ToString(), Encoding.UTF8);
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        //  Construcción del contenido — compartido por ambos métodos
+        // ════════════════════════════════════════════════════════════════
+        private static StringBuilder BuildContent(
+            string hostname,
+            IEnumerable<ListViewItem> softwareItems,
+            IEnumerable<ListViewItem> deviceItems)
+        {
             var sb = new StringBuilder();
 
             // ── Encabezado ───────────────────────────────────────────────
@@ -52,23 +89,21 @@ namespace SysInfoApp.Helpers
             sb.AppendLine("## Hardware");
             sb.AppendLine();
 
-            // Procesador
             sb.AppendLine("### Procesador");
             sb.AppendLine();
             sb.AppendLine("| Campo | Valor |");
             sb.AppendLine("|---|---|");
 
-            string cpuName    = GetWmi("Win32_Processor", "Name");
-            string cores      = GetWmi("Win32_Processor", "NumberOfCores");
-            string logical    = GetWmi("Win32_Processor", "NumberOfLogicalProcessors");
-            string speedMhz   = GetWmi("Win32_Processor", "MaxClockSpeed");
-            string arch       = GetWmi("Win32_Processor", "AddressWidth");
+            string cpuName  = GetWmi("Win32_Processor", "Name");
+            string cores    = GetWmi("Win32_Processor", "NumberOfCores");
+            string logical  = GetWmi("Win32_Processor", "NumberOfLogicalProcessors");
+            string speedMhz = GetWmi("Win32_Processor", "MaxClockSpeed");
+            string arch     = GetWmi("Win32_Processor", "AddressWidth");
 
-            string speed = int.TryParse(speedMhz, out int mhz)
-                ? $"{mhz / 1000.0:F2} GHz ({mhz} MHz)"
-                : speedMhz;
-
-            string archFmt = arch == "64" ? "64 bits" : arch == "32" ? "32 bits" : arch;
+            string speed   = int.TryParse(speedMhz, out int mhz)
+                ? $"{mhz / 1000.0:F2} GHz ({mhz} MHz)" : speedMhz;
+            string archFmt = arch == "64" ? "64 bits" :
+                             arch == "32" ? "32 bits" : arch;
 
             sb.AppendLine($"| Nombre | {MdCell(cpuName)} |");
             sb.AppendLine($"| Núcleos | {cores} físicos / {logical} lógicos |");
@@ -76,25 +111,23 @@ namespace SysInfoApp.Helpers
             sb.AppendLine($"| Arquitectura | {archFmt} |");
             sb.AppendLine();
 
-            // Memoria RAM
             sb.AppendLine("### Memoria RAM");
             sb.AppendLine();
             sb.AppendLine("| Campo | Valor |");
             sb.AppendLine("|---|---|");
 
-            string totalRaw = GetWmi("Win32_ComputerSystem", "TotalPhysicalMemory");
+            string totalRaw = GetWmi("Win32_ComputerSystem",  "TotalPhysicalMemory");
             string freeRaw  = GetWmi("Win32_OperatingSystem", "FreePhysicalMemory");
             string total    = FormatBytes(totalRaw);
+            string free     = long.TryParse(freeRaw, out long freeKb)
+                ? FormatBytes((freeKb * 1024).ToString()) : "N/A";
+            string used     = "N/A";
 
-            string free = long.TryParse(freeRaw, out long freeKb)
-                ? FormatBytes((freeKb * 1024).ToString())
-                : "N/A";
-
-            string used = "N/A";
             if (long.TryParse(totalRaw, out long totalBytes) && freeKb > 0)
             {
                 long usedBytes = totalBytes - (freeKb * 1024);
-                used = $"{FormatBytes(usedBytes.ToString())} ({(usedBytes * 100.0 / totalBytes):F1}% en uso)";
+                used = $"{FormatBytes(usedBytes.ToString())} " +
+                       $"({usedBytes * 100.0 / totalBytes:F1}% en uso)";
             }
 
             sb.AppendLine($"| Total | {total} |");
@@ -102,7 +135,6 @@ namespace SysInfoApp.Helpers
             sb.AppendLine($"| Disponible | {free} |");
             sb.AppendLine();
 
-            // Discos
             sb.AppendLine("### Discos");
             sb.AppendLine();
             sb.AppendLine("| Unidad | Etiqueta | Tipo | Sistema | Total | Disponible | Uso |");
@@ -110,20 +142,22 @@ namespace SysInfoApp.Helpers
 
             try
             {
-                using var searcher = new ManagementObjectSearcher(
-                    "SELECT * FROM Win32_LogicalDisk WHERE DriveType=3 OR DriveType=2");
+                using var ds = new ManagementObjectSearcher(
+                    "SELECT * FROM Win32_LogicalDisk " +
+                    "WHERE DriveType=3 OR DriveType=2");
 
-                foreach (ManagementObject disk in searcher.Get())
+                foreach (ManagementObject disk in ds.Get())
                 {
                     string drive  = disk["DeviceID"]?.ToString()   ?? "";
                     string label  = disk["VolumeName"]?.ToString()  ?? "";
                     string fs     = disk["FileSystem"]?.ToString()   ?? "";
-                    string dtype  = disk["DriveType"]?.ToString() == "3" ? "Fijo" : "Extraíble";
-
-                    long size  = Convert.ToInt64(disk["Size"]      ?? 0L);
-                    long free2 = Convert.ToInt64(disk["FreeSpace"]  ?? 0L);
-                    long used2 = size - free2;
-                    string pct = size > 0 ? $"{(used2 * 100.0 / size):F1}%" : "—";
+                    string dtype  = disk["DriveType"]?.ToString() == "3"
+                                    ? "Fijo" : "Extraíble";
+                    long   size   = Convert.ToInt64(disk["Size"]      ?? 0L);
+                    long   free2  = Convert.ToInt64(disk["FreeSpace"]  ?? 0L);
+                    long   used2  = size - free2;
+                    string pct    = size > 0
+                        ? $"{used2 * 100.0 / size:F1}%" : "—";
 
                     sb.AppendLine(
                         $"| {MdCell(drive)} " +
@@ -176,34 +210,57 @@ namespace SysInfoApp.Helpers
 
             sb.AppendLine();
 
-            // ── Programas instalados ─────────────────────────────────────
-            var items = softwareItems.ToList();
+            // ── Dispositivos ─────────────────────────────────────────────
+            var devices = deviceItems.ToList();
+
+            sb.AppendLine("## Dispositivos Conectados");
+            sb.AppendLine();
+            sb.AppendLine($"Total: **{devices.Count} dispositivos**");
+            sb.AppendLine();
+            sb.AppendLine("| Nombre | Tipo | Fabricante | Estado | ID |");
+            sb.AppendLine("|---|---|---|---|---|");
+
+            foreach (ListViewItem item in devices)
+            {
+                string name  = MdCell(item.Text);
+                string type  = MdCell(item.SubItems.Count > 1
+                    ? item.SubItems[1].Text : "");
+                string mfg   = MdCell(item.SubItems.Count > 2
+                    ? item.SubItems[2].Text : "");
+                string stat  = MdCell(item.SubItems.Count > 3
+                    ? item.SubItems[3].Text : "");
+                string id    = MdCell(item.SubItems.Count > 4
+                    ? item.SubItems[4].Text : "");
+                sb.AppendLine($"| {name} | {type} | {mfg} | {stat} | {id} |");
+            }
+
+            sb.AppendLine();
+
+            // ── Aplicaciones instaladas ──────────────────────────────────
+            var swItems = softwareItems.ToList();
 
             sb.AppendLine("## Aplicaciones Instaladas");
             sb.AppendLine();
-            sb.AppendLine($"Total: **{items.Count} aplicaciones**");
+            sb.AppendLine($"Total: **{swItems.Count} aplicaciones**");
             sb.AppendLine();
             sb.AppendLine("| Nombre | Versión | Publicador | Fecha instalación |");
             sb.AppendLine("|---|---|---|---|");
 
-            foreach (ListViewItem item in items)
+            foreach (ListViewItem item in swItems)
             {
                 string name = MdCell(item.Text);
-                string ver  = MdCell(item.SubItems.Count > 1 ? item.SubItems[1].Text : "");
-                string pub  = MdCell(item.SubItems.Count > 2 ? item.SubItems[2].Text : "");
-                string date = MdCell(item.SubItems.Count > 3 ? item.SubItems[3].Text : "");
+                string ver  = MdCell(item.SubItems.Count > 1
+                    ? item.SubItems[1].Text : "");
+                string pub  = MdCell(item.SubItems.Count > 2
+                    ? item.SubItems[2].Text : "");
+                string date = MdCell(item.SubItems.Count > 3
+                    ? item.SubItems[3].Text : "");
                 sb.AppendLine($"| {name} | {ver} | {pub} | {date} |");
             }
 
             sb.AppendLine();
 
-            File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-
-            MessageBox.Show(
-                $"Archivo guardado correctamente:\n\n{dlg.FileName}",
-                "Exportación completada",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+            return sb;
         }
 
         // ── Helpers privados ─────────────────────────────────────────────
@@ -213,7 +270,8 @@ namespace SysInfoApp.Helpers
             try
             {
                 using var searcher =
-                    new ManagementObjectSearcher($"SELECT {property} FROM {wmiClass}");
+                    new ManagementObjectSearcher(
+                        $"SELECT {property} FROM {wmiClass}");
                 foreach (ManagementObject obj in searcher.Get())
                     return obj[property]?.ToString()?.Trim() ?? "N/A";
             }
@@ -233,9 +291,6 @@ namespace SysInfoApp.Helpers
             return $"{bytes} B";
         }
 
-        /// <summary>
-        /// Escapa caracteres especiales de Markdown dentro de celdas de tabla.
-        /// </summary>
         private static string MdCell(string value)
         {
             return value

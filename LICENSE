@@ -1,0 +1,132 @@
+MIT License
+
+Copyright (c) 2025 404q9l - FoxShell
+https://github.com/jgohortiz
+
+Por la presente se concede permiso, de forma gratuita, a cualquier persona
+que obtenga una copia de este software y de los archivos de documentación
+asociados (el "Software"), para utilizar el Software sin restricción,
+incluyendo sin limitación los derechos de usar, copiar, modificar, fusionar,
+publicar, distribuir, sublicenciar y/o vender copias del Software, y para
+permitir a las personas a las que se les proporcione el Software que lo
+hagan, sujeto a las siguientes condiciones:
+
+El aviso de copyright anterior y este aviso de permiso se incluirán en todas
+las copias o partes sustanciales del Software.
+
+EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA
+O IMPLÍCITA, INCLUYENDO PERO NO LIMITÁNDOSE A LAS GARANTÍAS DE
+COMERCIABILIDAD, IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EN
+NINGÚN CASO LOS AUTORES O TITULARES DEL COPYRIGHT SERÁN RESPONSABLES DE
+NINGUNA RECLAMACIÓN, DAÑO U OTRA RESPONSABILIDAD, YA SEA EN UNA ACCIÓN
+CONTRACTUAL, EXTRACONTRACTUAL O DE OTRO TIPO, QUE SURJA DE, FUERA DE O EN
+CONEXIÓN CON EL SOFTWARE O EL USO U OTRAS OPERACIONES EN EL SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+COMPONENTES Y DEPENDENCIAS DE TERCEROS
+
+Este software utiliza los siguientes componentes de terceros, cada uno con
+su propia licencia:
+
+  .NET 8 Runtime y WinForms
+  Licencia: MIT
+  Copyright (c) Microsoft Corporation
+  https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
+
+  System.Management (paquete NuGet)
+  Licencia: MIT
+  Copyright (c) Microsoft Corporation
+  https://www.nuget.org/packages/System.Management
+
+  WMI (Windows Management Instrumentation)
+  Componente del sistema operativo Windows.
+  Su uso está cubierto por los términos de licencia de Microsoft Windows.
+  No se redistribuye ningún componente de WMI con este software.
+
+  Registro de Windows (Microsoft.Win32.Registry)
+  Licencia: MIT
+  Copyright (c) Microsoft Corporation
+  Parte del runtime de .NET.
+
+  netsh / wmic
+  Herramientas del sistema operativo Windows.
+  No se redistribuyen con este software. Se invocan en tiempo de ejecución
+  como utilidades del sistema.
+
+  Fuente Segoe UI
+  Propiedad de Microsoft Corporation.
+  Incluida en el sistema operativo Windows. Este software la referencia en
+  tiempo de ejecución y no la redistribuye como archivo independiente.
+  Su uso está cubierto por los términos de licencia de Microsoft Windows.
+
+-------------------------------------------------------------------------------
+
+CONDICIONES DE USO
+
+1. Uso personal y comercial
+   Este software puede utilizarse libremente para fines personales,
+   educativos, corporativos y comerciales sin necesidad de notificación
+   ni pago al autor.
+
+2. Modificación y distribución
+   Se permite modificar el código fuente y distribuir versiones derivadas,
+   siempre que se mantenga el aviso de copyright original y esta licencia
+   en todas las copias o partes sustanciales del software.
+
+3. Atribución
+   No es obligatorio, pero se agradece mantener la mención al autor original
+   (404q9l - FoxShell) en el código fuente, documentación o interfaz de la
+   aplicación cuando se distribuyan versiones derivadas.
+
+4. Compatibilidad con Windows
+   Este software está diseñado exclusivamente para ejecutarse en sistemas
+   operativos Microsoft Windows. El autor no garantiza su funcionamiento en
+   otros sistemas operativos ni en entornos de virtualización o emulación
+   de Windows.
+
+5. Sin garantía de precisión
+   La información mostrada por esta aplicación se obtiene de APIs del sistema
+   operativo y del registro de Windows. El autor no garantiza la exactitud,
+   completitud o actualidad de los datos mostrados. El uso de esta información
+   es responsabilidad exclusiva del usuario.
+
+6. Sin garantía de funcionamiento sin privilegios
+   Si bien la aplicación está diseñada para funcionar sin permisos de
+   administrador, algunas funcionalidades como la lectura del número de serie
+   del BIOS o el SSID de Wi-Fi pueden estar restringidas por la configuración
+   de seguridad del sistema operativo o las políticas de grupo (GPO) del
+   entorno en el que se ejecute.
+
+-------------------------------------------------------------------------------
+
+LIMITACIÓN DE RESPONSABILIDAD
+
+En ningún caso el autor será responsable por:
+
+  - Daños directos, indirectos, incidentales, especiales o consecuentes
+    que surjan del uso o la imposibilidad de uso de este software.
+  - Pérdida de datos, interrupción del negocio o cualquier otro daño
+    comercial o pérdida derivada del uso de este software.
+  - Decisiones tomadas con base en la información mostrada por la aplicación.
+
+Esta limitación aplica independientemente de la teoría legal bajo la que
+se presente la reclamación y aunque el autor haya sido advertido de la
+posibilidad de dichos daños.
+
+-------------------------------------------------------------------------------
+
+MARCAS REGISTRADAS
+
+Windows, Segoe UI, WMI y otros nombres de productos de Microsoft son marcas
+registradas o marcas comerciales de Microsoft Corporation en los Estados
+Unidos y/u otros países. Este software no está afiliado, patrocinado ni
+respaldado por Microsoft Corporation.
+
+-------------------------------------------------------------------------------
+
+VERSIÓN DE ESTA LICENCIA
+
+Versión 1.0 — 2025
+404q9l - FoxShell
+https://github.com/jgohortiz

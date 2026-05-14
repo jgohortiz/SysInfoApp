@@ -12,18 +12,16 @@ namespace SysInfoApp
         private HardwarePage _hardwarePage = null!;
         private NetworkPage  _networkPage  = null!;
         private PrintersPage _printersPage = null!;
+        private DevicesPage  _devicesPage  = null!;
         private SoftwarePage _softwarePage = null!;
         private BatteryPage? _batteryPage;
 
-        /// <summary>
-        /// Constructor que recibe las páginas ya construidas desde Program.cs.
-        /// Así el splash puede mostrar el progreso real de cada una.
-        /// </summary>
         public Form1(
             SystemPage   systemPage,
             HardwarePage hardwarePage,
             NetworkPage  networkPage,
             PrintersPage printersPage,
+            DevicesPage  devicesPage,
             SoftwarePage softwarePage,
             BatteryPage? batteryPage)
         {
@@ -40,6 +38,7 @@ namespace SysInfoApp
             _hardwarePage = hardwarePage;
             _networkPage  = networkPage;
             _printersPage = printersPage;
+            _devicesPage  = devicesPage;
             _softwarePage = softwarePage;
             _batteryPage  = batteryPage;
 
@@ -55,13 +54,14 @@ namespace SysInfoApp
                 Font = new Font("Segoe UI", 9f)
             };
 
-            tabs.TabPages.Add(_systemPage);       // 1. Sistema   — siempre primero
+            tabs.TabPages.Add(_systemPage);       // 1. Sistema
             tabs.TabPages.Add(_softwarePage);     // 2. Aplicaciones
-            if (_batteryPage != null)             // 3. Batería   — solo si hay
+            if (_batteryPage != null)             // 3. Batería (si aplica)
                 tabs.TabPages.Add(_batteryPage);
-            tabs.TabPages.Add(_hardwarePage);     // 4. Hardware
-            tabs.TabPages.Add(_printersPage);     // 5. Impresoras
-            tabs.TabPages.Add(_networkPage);      // 6. Red
+            tabs.TabPages.Add(_devicesPage);      // 4. Dispositivos
+            tabs.TabPages.Add(_hardwarePage);     // 5. Hardware
+            tabs.TabPages.Add(_printersPage);     // 6. Impresoras
+            tabs.TabPages.Add(_networkPage);      // 7. Red
 
             // ── StatusStrip ──────────────────────────────────────────────
             var status = new StatusStrip();
@@ -92,7 +92,9 @@ namespace SysInfoApp
                 Font  = new Font("Segoe UI", 9f)
             };
             btnExport.Click += (_, _) =>
-                ExportHelper.ExportToTxt(_softwarePage.VisibleItems);
+                ExportHelper.ExportToTxt(
+                    _softwarePage.VisibleItems,
+                    _devicesPage.VisibleItems);
 
             var btnRefresh = new Button
             {
@@ -122,23 +124,12 @@ namespace SysInfoApp
             this.Controls.Add(status);
         }
 
-        private static bool HasBattery()
-        {
-            try
-            {
-                var ps = SystemInformation.PowerStatus;
-                return ps.BatteryChargeStatus != BatteryChargeStatus.NoSystemBattery
-                    && ps.BatteryChargeStatus != BatteryChargeStatus.Unknown;
-            }
-            catch { }
-            return false;
-        }
-
         private void RefreshAll()
         {
             _hardwarePage.RefreshData();
             _networkPage.RefreshData();
             _printersPage.RefreshData();
+            _devicesPage.RefreshData();
             _batteryPage?.RefreshData();
         }
     }

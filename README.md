@@ -6,8 +6,11 @@
 
 Aplicación de escritorio para Windows desarrollada en .NET 8 con WinForms.
 Muestra información detallada del equipo en tiempo real: sistema, hardware,
-red, software instalado, impresoras y batería. Diseñada para funcionar sin
-permisos de administrador.
+red, software instalado, impresoras, dispositivos conectados y batería.
+Diseñada para funcionar sin permisos de administrador.
+
+Puede ejecutarse como aplicación de escritorio o por línea de comandos para
+generar reportes automáticos sin abrir ninguna ventana.
 
 ---
 
@@ -63,7 +66,8 @@ bin\Release\net9.0-windows\win-x64\publish
 ```
 
 > El archivo `.pdb` no es necesario para distribuir la aplicación. Solo se
-> necesita el `.exe` generado en la carpeta publish.
+> necesita el `.exe` generado en la carpeta publish. Para evitar que se
+> genere el `.pdb`, agregar `<DebugType>none</DebugType>` en el `.csproj`.
 
 ---
 
@@ -73,11 +77,13 @@ bin\Release\net9.0-windows\win-x64\publish
 SysInfoApp/
 ├── Program.cs
 ├── Form1.cs
+├── SplashForm.cs
 ├── Pages/
 │   ├── SystemPage.cs
 │   ├── HardwarePage.cs
 │   ├── NetworkPage.cs
 │   ├── PrintersPage.cs
+│   ├── DevicesPage.cs
 │   ├── SoftwarePage.cs
 │   └── BatteryPage.cs
 ├── Helpers/
@@ -85,6 +91,29 @@ SysInfoApp/
 │   └── ExportHelper.cs
 └── SysInfoApp.csproj
 ```
+
+---
+
+## Pantalla de carga (Splash)
+
+Al iniciar la aplicación se muestra una ventana de carga que refleja el
+progreso real de cada componente mientras se obtiene la información del
+sistema. La barra de progreso avanza a medida que cada módulo termina de
+cargar, por lo que el tiempo mostrado corresponde al tiempo real de cada
+consulta.
+
+Los pasos de carga son:
+
+| Paso | Descripción |
+|---|---|
+| 1 | Información del sistema (hostname, modelo, serial, SO, uptime) |
+| 2 | Hardware (procesador, RAM, discos) |
+| 3 | Adaptadores de red |
+| 4 | Impresoras instaladas |
+| 5 | Dispositivos conectados |
+| 6 | Batería (solo si aplica) |
+| 7 | Aplicaciones instaladas |
+| 8 | Preparación de la interfaz |
 
 ---
 
@@ -170,6 +199,29 @@ original de fábrica para determinar el nivel de desgaste de la batería.
 | Capacidad de diseño | Capacidad original de fábrica en mWh |
 | Voltaje | Voltaje nominal en voltios |
 | Química | Tipo de batería (Litio-Ion, Litio-Polímero, etc.) |
+
+---
+
+### Dispositivos
+
+Muestra todos los dispositivos Plug and Play conectados o instalados en el
+equipo. Incluye dispositivos USB, Bluetooth, teclados, ratones, monitores,
+discos, tarjetas de audio, cámaras, puertos COM, lectores de tarjeta,
+sensores, dispositivos biométricos y más.
+
+La lista se ordena automáticamente por tipo de dispositivo y luego por nombre.
+Incluye un buscador en tiempo real que filtra por nombre, tipo o fabricante.
+Se puede ordenar por cualquier columna haciendo clic en el encabezado.
+
+Se actualiza al hacer clic en el botón Refrescar.
+
+| Columna | Descripción |
+|---|---|
+| Nombre | Nombre del dispositivo reportado por Windows |
+| Tipo | Categoría del dispositivo (USB, Bluetooth, Audio, etc.) |
+| Fabricante | Empresa que fabrica el dispositivo |
+| Estado | Estado operacional (OK, Error, Degradado, etc.) |
+| ID | Identificador único del dispositivo (DeviceID) |
 
 ---
 
@@ -287,10 +339,10 @@ Obsidian, Notion, GitHub o cualquier visor Markdown.
   `HOSTNAME_yyyyMMdd_HHmmss.md`
 - Se guarda en el escritorio por defecto. La ruta se puede cambiar en el
   diálogo de guardado.
-- Si hay un filtro activo en la pestaña Aplicaciones, solo se exportan
-  los programas visibles.
+- Si hay un filtro activo en la pestaña Aplicaciones o Dispositivos, solo
+  se exportan los elementos visibles.
 - Incluye las secciones: Sistema, Hardware (procesador, RAM, discos),
-  Red y Aplicaciones instaladas.
+  Red, Dispositivos conectados y Aplicaciones instaladas.
 
 ### Refrescar
 
@@ -302,12 +354,59 @@ Actualiza los datos dinámicos de la aplicación sin necesidad de reiniciarla.
 | Hardware | RAM y discos se actualizan al hacer clic |
 | Red | La lista de adaptadores se actualiza al hacer clic |
 | Impresoras | La lista se actualiza al hacer clic |
+| Dispositivos | La lista se actualiza al hacer clic |
 | Batería | Se actualiza cada 30 segundos y al hacer clic |
 | Aplicaciones | No se refresca (los cambios son poco frecuentes) |
 
 ### Cerrar
 
 Cierra la aplicación.
+
+---
+
+## Uso por línea de comandos
+
+La aplicación puede ejecutarse desde la línea de comandos para generar
+el archivo de exportación directamente en una ruta específica sin abrir
+ninguna ventana. Útil para scripts de inventario o automatización.
+
+### Sintaxis
+
+```bash
+SysInfoApp.exe --export "ruta\carpeta" [--filename "nombre_archivo"]
+```
+
+### Argumentos
+
+| Argumento | Descripción |
+|---|---|
+| `--export` | Ruta de la carpeta donde se guardará el archivo (obligatorio) |
+| `--filename` | Nombre del archivo sin extensión (opcional). Si no se indica, se usa `HOSTNAME_yyyyMMdd_HHmmss` |
+
+### Ejemplos
+
+```bash
+# Exportar en el escritorio
+SysInfoApp.exe --export "%USERPROFILE%\Desktop"
+
+# Exportar en una carpeta específica
+SysInfoApp.exe --export "C:\Reportes\IT"
+
+# Exportar con nombre personalizado
+SysInfoApp.exe --export "C:\Reportes" --filename "inventario_sala3"
+
+# Inventario masivo desde un script .bat
+for /f %%i in ('hostname') do (
+    SysInfoApp.exe --export "\\servidor\inventario" --filename "%%i"
+)
+```
+
+### Comportamiento
+
+- Si la carpeta de destino no existe, se crea automáticamente.
+- Si la exportación es exitosa, la aplicación termina con código de salida 0.
+- Si ocurre un error, muestra el mensaje en la consola y termina con código 1.
+- Sin argumentos, la aplicación abre la ventana normal.
 
 ---
 
@@ -340,6 +439,11 @@ Cierra la aplicación.
 | Adaptador | IP (IPv4) | MAC | Estado |
 ...
 
+## Dispositivos Conectados
+| Nombre | Tipo | Fabricante | Estado | ID |
+...
+Total: N dispositivos
+
 ## Aplicaciones Instaladas
 | Nombre | Versión | Publicador | Fecha instalación |
 ...
@@ -359,6 +463,7 @@ principal no esté disponible.
 | Serial BIOS | WMI Win32_BIOS | WMI con impersonación, luego wmic CLI |
 | Wi-Fi SSID | WMI MSNdis_80211 | netsh wlan show interfaces |
 | Impresoras | WMI Win32_Printer | PrinterSettings.InstalledPrinters |
+| Dispositivos | WMI Win32_PnPEntity | Sin alternativa, falla silenciosamente |
 | Batería | SystemInformation.PowerStatus | WMI Win32_Battery |
 | Registro software | Registry.LocalMachine | try/catch por clave individual |
 | Todo lo demás | APIs públicas de .NET | Sin restricción de permisos |
